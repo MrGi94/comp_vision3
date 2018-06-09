@@ -16,6 +16,7 @@ p23T = Camera1(2,:);
 for i = 1:length(matchpoints1)
     A = [x1(i)*p13T-p11T; y1(i)*p13T-p12T; x2(i)*p23T-p21T; y2(i)*p23T-p22T];
     [v,d] = eig(A);
+    % find now/back pictures and send to Tahmina
 end
 
 % extract center of projection for each camera

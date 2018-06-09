@@ -10,7 +10,7 @@ matches = load([example '_matches.txt']);
 matchPoints1 = [matches(:,1) matches(:,2)];
 matchPoints2 = [matches(:,3) matches(:,4)];
 % rec3D = recon_3D(matchPoints1, matchPoints2, C1, C2, I1, I2);
-[F, R] = FMatrix(matchPoints1, matchPoints2);
+[F, R] = FMatrix(matchPoints1, matchPoints2, I1, I2);
 % this is a N x 4 file where the first two numbers of each row
 % are coordinates of corners in the first image and the last two
 % are coordinates of corresponding corners in the second image: 

@@ -1,16 +1,21 @@
 %%
 %% load images and match files for the first example
 %%
-
-I1 = imread('library1.jpg');
-I2 = imread('library2.jpg');
-matches = load('library_matches.txt'); 
+example = 'house';
+I1 = imread([example '1.jpg']);
+I2 = imread([example '2.jpg']);
+C1 = load([example '1_camera.txt']);
+C2 = load([example '2_camera.txt']);
+matches = load([example '_matches.txt']); 
+matchPoints1 = [matches(:,1) matches(:,2)];
+matchPoints2 = [matches(:,3) matches(:,4)];
+% rec3D = recon_3D(matchPoints1, matchPoints2, C1, C2, I1, I2);
+[F, R] = FMatrix(matchPoints1, matchPoints2);
 % this is a N x 4 file where the first two numbers of each row
 % are coordinates of corners in the first image and the last two
 % are coordinates of corresponding corners in the second image: 
 % matches(i,1:2) is a point in the first image
 % matches(i,3:4) is a corresponding point in the second image
-
 N = size(matches,1);
 
 %%
@@ -22,7 +27,7 @@ imshow([I1 I2]); hold on;
 plot(matches(:,1), matches(:,2), '+r');
 plot(matches(:,3)+size(I1,2), matches(:,4), '+r');
 line([matches(:,1) matches(:,3) + size(I1,2)]', matches(:,[2 4])', 'Color', 'r');
-pause;
+%pause;
 
 %%
 %% display second image with epipolar lines reprojected 
@@ -30,7 +35,6 @@ pause;
 %%
 
 %% first, fit fundamental matrix to the matches ()
-F = estimage_fund_matrix(matches); % this is a function that you should write
 L = [matches(:,1:2) ones(N,1)] * F; % transform points from 
 % the first image to get epipolar lines in the second image
 

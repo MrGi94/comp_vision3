@@ -1,29 +1,22 @@
-function [ recon_3d ] = recon_3D( matchpoints1, matchpoints2, Camera1, Camera2, Image1, Image2 )
-% generate equations
-x1 = matchpoints1(:,1);
-x2 = matchpoints2(:,1);
-y1 = matchpoints1(:,2);
-y2 = matchpoints2(:,2);
+function [ recon_3d ] = recon_3D( matchpoints1, matchpoints2, Camera1, Camera2)
+% applies the algebraic triangulation method to find the position of every
+% pair of matching points
 
-p11T = Camera1(1,:);
-p12T = Camera1(3,:);
-p13T = Camera1(2,:);
-
-p21T = Camera1(1,:);
-p22T = Camera1(3,:);
-p23T = Camera1(2,:);
+% convert the matchpoints into homogeneous coordinates
+homo_mp1 = cart2homo(matchpoints1);
+homo_mp2 = cart2homo(matchpoints2);
+% 3 dimensions + homogeneous coordinate
+recon_4d = []; 
 
 for i = 1:length(matchpoints1)
-    A = [x1(i)*p13T-p11T; y1(i)*p13T-p12T; x2(i)*p23T-p21T; y2(i)*p23T-p22T];
-    [v,d] = eig(A);
-    % find now/back pictures and send to Tahmina
+    equation_1 = [0 -homo_mp1(i,3) homo_mp1(i,2); homo_mp1(i,3) 0 -homo_mp1(i,1); -homo_mp1(i,2) homo_mp1(i,1) 0];
+    equation_2 = [0 -homo_mp2(i,3) homo_mp2(i,2); homo_mp2(i,3) 0 -homo_mp2(i,1); -homo_mp2(i,2) homo_mp2(i,1) 0];
+    A = [equation_1*Camera1; equation_2*Camera2];
+    [~, ~, V] = svd(A);
+    recon_4d(i,:) = V(:,end)';
 end
 
-% extract center of projection for each camera
-[~,~,Vc1] = svd(Camera1);
-COP1 = Vc1(:, length(Vc1));
-[~,~,Vc2] = svd(Camera2);
-COP2 = Vc2(:, length(Vc2));
-
+% transform homogeneous coordinates to cartesian
+% by dividing each row with last number in that row
+recon_3d = homo2cart(recon_4d);
 end
-

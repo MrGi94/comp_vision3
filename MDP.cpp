@@ -223,7 +223,7 @@ float  MDP::GetProbability(int Pre_State, int Action, int NextState)		//Input fo
 	case (int)State::s2:
 
 		if ((Action == (int)Action::b1) && (NextState == (int)State::s6))
-			Prob = 1.0f;
+			Prob = 0.9f;
 
 		else if ((Action == (int)Action::a2) && (NextState == (int)State::s5))
 			Prob = 0.9f;
@@ -242,7 +242,7 @@ float  MDP::GetProbability(int Pre_State, int Action, int NextState)		//Input fo
 
 	case (int)State::s6:
 		if ((Action == (int)Action::b2) && (NextState == (int)State::s2))
-			Prob = 1.0f;
+			Prob = 0.9f;
 
 		else if ((Action == (int)Action::a1) && (NextState == (int)State::s11))
 			Prob = 0.9f;

@@ -1,6 +1,7 @@
 #include<iostream>
 #include<string>
-#include<conio.h>
+#include <cstdio>
+#include <time.h>
 #include"MDP.h"
 
 using namespace std;
@@ -12,23 +13,27 @@ int iteration = 0;
 
 
 void ValueIteration_MDP();
-//void PolicyIteration_MDP();			// you have to code for that
-double GetMaxUtility(int State);
-string GetActionName(int j);
+void PolicyIteration_MDP();		
+double Max_Utility(int State);
+string GetActionName(int a);
+
+vector<double> Utility_for_policyItr();
+vector<double> GetCoefficients(int State);
+int Max_arg_Utility(int State);
 
 
 int main()
 {
 	char ch;
 	int choice;
-
+	clock_t clkStart;
+	clock_t clkFinish;
+	clock_t clkdiff;
 	do
-	{
-		
+	{		
 		Utility.assign(Total_state, 0);
 		Policy.assign(Total_state, 0);
-		
-		cout << endl;
+		iteration = 0;
 		cout << "1. Value Iteration"<<endl;
 		cout << "2. Policy Iteration"<<endl;
 		cout << "Option:";
@@ -37,19 +42,26 @@ int main()
 		switch (choice)
 		{
 		case 1:
+			clkStart = clock();
 			ValueIteration_MDP();
+			clkFinish = clock();
 			break;
 		case 2:
-			//PolicyIteration_MDP();
+			clkStart = clock();
+			PolicyIteration_MDP();
+			clkFinish = clock();
 			break;
 		default:
 			cout << "Invalid!";
 			break;
 		}
-		cout << endl<<"Continue(y/n):";
-		ch = _getch();
+		clkdiff=clkFinish - clkStart;
+		cout <<endl<<"Total execution time: " << clkdiff <<"sec"<< endl;
+		cout << endl<<"Continue(y/n)? : ";
+		ch = getchar();
+		ch = getchar();
 	} while (ch == 'Y' || ch == 'y');
-
+	
 	return 0;
 }
 
@@ -58,10 +70,11 @@ int main()
 void ValueIteration_MDP()
 {
 
-	cout << "*************************Value Iteration Results*******************\n";
+	cout << "=============================Value Iteration Results======================\n";
 
 	double Delta;
 	Utility1.assign(Total_state, 0);	
+	int Obser_state = 3;
 
 	do
 	{
@@ -69,7 +82,7 @@ void ValueIteration_MDP()
 		for (int i = 0; i < Total_state; i++)
 		{
 
-			double New = GetMaxUtility(i);
+			double New = Max_Utility(i);
 
 			if (abs(New - Utility[i]) > Delta)
 				Delta = abs(New - Utility[i]);
@@ -89,38 +102,41 @@ void ValueIteration_MDP()
 		cout << endl;
 		cout << "----------------Policies of states---------------" << endl;
 		for (int i = 0; i < Total_state; i++)
-			cout << "Policy[" << i << "]=" << GetActionName(Policy[i]) << endl;
+			if(i== Obser_state)
+				cout << "Policy[" << i << "]=" << "0" << endl;
+			else
+				cout << "Policy[" << i << "]=" << GetActionName(Policy[i]) << endl;
 
 	} while (Delta>=Epsilon);		
 
 	
 }
-/*
-void PolicyIteration_MDP()			//I try to design it, if not correct change it
+
+void PolicyIteration_MDP()			
 {
-	cout << "*************************Policy Iteration Results*******************\n";
+	cout << "========================Policy Iteration Results=======================\n";
 
 	iteration = 1;
 
-	bool bUnchanged;
+	bool Unchange_flag;
+	int Obser_state = 3;
 	
 	Policy.assign(Total_state, 0);
 
 	do
 	{
 
-		Utility = GetUtilitySolvingBellman();
-
-		bUnchanged = true;
+		Utility = Utility_for_policyItr();
+		Unchange_flag = true;
 
 		for (int i = 0; i < Total_state; i++)
 		{
 
-			int a = GetActionGivingMaxUtility(i);
+			int a = Max_arg_Utility(i);
 			if (Policy[i] != a)
 			{
 				Policy[i] = a;
-				bUnchanged = false;
+				Unchange_flag = false;
 			}
 
 		}
@@ -134,15 +150,18 @@ void PolicyIteration_MDP()			//I try to design it, if not correct change it
 		cout << endl;
 		cout << "----------------Policies of states---------------" << endl;
 		for (int i = 0; i < Total_state; i++)
-			cout << "Policy[" << i << "]=" << GetActionName(Policy[i]) << endl;
+			if (i == Obser_state)
+				cout << "Policy[" << i << "]=" << "0" << endl;
+			else
+				cout << "Policy[" << i << "]=" << GetActionName(Policy[i]) << endl;
 		iteration++;
 
-	} while (!bUnchanged);
+	} while (!Unchange_flag);
 	
 }
-*/
 
-double GetMaxUtility(int State)			//it's return the max Utility of each State
+
+double Max_Utility(int State)		
 {
 
 	double MaxUtility = Utility[State];
@@ -172,10 +191,48 @@ double GetMaxUtility(int State)			//it's return the max Utility of each State
 	return MaxUtility;
 }
 
-string GetActionName(int j)				//it's return the action name int to string, it's help to display output
+
+vector<double> Utility_for_policyItr()
+{
+	vector<vector<double>> C_all_utility;		//Contains all the Cofficients of all Utility
+
+	for (int i =0; i < Total_state; i++)	
+		C_all_utility.push_back(GetCoefficients(i));	
+
+	return Utility;
+}
+
+
+vector<double> GetCoefficients(int State)
+{
+	vector<double> myCofficient;
+
+	double Reward = 0.0f;
+
+	for (int k = 0; k < Total_state; k++) //count+1 since we have a new column of rewards
+	{
+
+		if (k == State)
+			myCofficient.push_back(1 - (Gamma * MDP::Ptr()->TransitionProb[State][Policy[State]][k]));
+		else
+			myCofficient.push_back(-(Gamma * MDP::Ptr()->TransitionProb[State][Policy[State]][k]));
+
+	}
+
+	for (int k = 0; k < Total_state; k++)
+	{
+		Reward += MDP::Ptr()->TransitionProb[State][Policy[State]][k] * MDP::Ptr()->RewardValue[State][Policy[State]][k];
+	}
+
+	myCofficient.push_back(Reward);
+
+	return myCofficient;
+}
+
+string GetActionName(int a)				//it's return the action name int to string, it's help to display output
 {
 	string Action = "";
-	switch (j)
+	switch (a)
 	{
 		case 0:
 			Action = "a1";
@@ -197,5 +254,36 @@ string GetActionName(int j)				//it's return the action name int to string, it's
 			break;
 	}
 	return Action;
+}
+
+int Max_arg_Utility(int State)
+{
+	int MaxAction = Policy[State];
+	double result, Reward, E_utility;
+	double MaxUtility = Utility[State];
+	int i = State;//current state
+
+	for (int j =0; j < Total_action; j++)//action
+	{
+		
+		Reward = 0.0f;
+		E_utility = 0.0f;
+
+		for (int k = 0; k < Total_state; k++)
+		{
+			Reward += MDP::Ptr()->TransitionProb[i][j][k] * MDP::Ptr()->RewardValue[i][j][k];	//i-State;j-Action
+			E_utility += MDP::Ptr()->TransitionProb[i][j][k] * Utility[k];
+		}
+
+		result = Reward + Gamma * E_utility;
+
+		if (result > MaxUtility)
+		{
+			Utility[i] = result;
+			MaxUtility = result;
+			MaxAction = j;
+		}
+	}
+	return MaxAction;
 }
 
